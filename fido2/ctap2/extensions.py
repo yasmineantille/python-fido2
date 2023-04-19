@@ -258,3 +258,33 @@ class MinPinLengthExtension(Ctap2Extension):
     def process_create_input(self, inputs):
         if self.is_supported() and inputs.get(self.NAME) is True:
             return True
+
+
+class GreeterExtension(Ctap2Extension):
+    """
+    Implements the greeter CTAP2 extension
+    """
+
+    NAME = "greeter"
+
+    def process_create_input(self, inputs):
+        return self.is_supported() and inputs.get(self.NAME)
+
+    def process_create_output(self, attestation_response, *args):
+        if self.NAME in attestation_response.auth_data.extensions:
+            return {"greeter": attestation_response.auth_data.extensions.get(self.NAME)}
+
+
+class PingPongExtension(Ctap2Extension):
+    NAME = "ping-pong"
+
+    def __init__(self, ctap, pin_protocol=None):
+        super().__init__(ctap)
+        self.pin_protocol = pin_protocol
+
+    def process_create_input(self, inputs):
+        return self.is_supported() and inputs.get(self.NAME)
+
+    def process_create_output(self, attestation_response, *args):
+        if self.NAME in attestation_response.auth_data.extensions:
+            return {"ping-pong": attestation_response.auth_data.extensions.get(self.NAME)}
