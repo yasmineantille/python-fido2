@@ -57,15 +57,15 @@ class Ctap2Extension(abc.ABC):
         return None
 
     def process_create_input_with_permissions(
-        self, inputs: Dict[str, Any]
+            self, inputs: Dict[str, Any]
     ) -> Tuple[Any, ClientPin.PERMISSION]:
         return self.process_create_input(inputs), ClientPin.PERMISSION(0)
 
     def process_create_output(
-        self,
-        attestation_response: AttestationResponse,
-        token: Optional[str],
-        pin_protocol: Optional[PinProtocol],
+            self,
+            attestation_response: AttestationResponse,
+            token: Optional[str],
+            pin_protocol: Optional[PinProtocol],
     ) -> Optional[Dict[str, Any]]:
         """Return client extension output given attestation_response, or None."""
         return None
@@ -77,15 +77,15 @@ class Ctap2Extension(abc.ABC):
         return None
 
     def process_get_input_with_permissions(
-        self, inputs: Dict[str, Any]
+            self, inputs: Dict[str, Any]
     ) -> Tuple[Any, ClientPin.PERMISSION]:
         return self.process_get_input(inputs), ClientPin.PERMISSION(0)
 
     def process_get_output(
-        self,
-        assertion_response: AssertionResponse,
-        token: Optional[str],
-        pin_protocol: Optional[PinProtocol],
+            self,
+            assertion_response: AssertionResponse,
+            token: Optional[str],
+            pin_protocol: Optional[PinProtocol],
     ) -> Optional[Dict[str, Any]]:
         """Return client extension output given assertion_response, or None."""
         return None
@@ -119,8 +119,8 @@ class HmacSecretExtension(Ctap2Extension):
         salt1 = data["salt1"]
         salt2 = data.get("salt2", b"")
         if not (
-            len(salt1) == HmacSecretExtension.SALT_LEN
-            and (not salt2 or len(salt2) == HmacSecretExtension.SALT_LEN)
+                len(salt1) == HmacSecretExtension.SALT_LEN
+                and (not salt2 or len(salt2) == HmacSecretExtension.SALT_LEN)
         ):
             raise ValueError("Invalid salt length")
 
@@ -144,7 +144,7 @@ class HmacSecretExtension(Ctap2Extension):
 
         decrypted = self.pin_protocol.decrypt(self.shared_secret, value)
         output1 = decrypted[: HmacSecretExtension.SALT_LEN]
-        output2 = decrypted[HmacSecretExtension.SALT_LEN :]
+        output2 = decrypted[HmacSecretExtension.SALT_LEN:]
         outputs = {"output1": output1}
         if output2:
             outputs["output2"] = output2
@@ -276,6 +276,10 @@ class GreeterExtension(Ctap2Extension):
 
 
 class PingPongExtension(Ctap2Extension):
+    """
+    Implements the ping pong CTAP2 extension
+    """
+
     NAME = "ping-pong"
 
     def __init__(self, ctap, pin_protocol=None):
@@ -288,3 +292,4 @@ class PingPongExtension(Ctap2Extension):
     def process_create_output(self, attestation_response, *args):
         if self.NAME in attestation_response.auth_data.extensions:
             return {"ping-pong": attestation_response.auth_data.extensions.get(self.NAME)}
+
