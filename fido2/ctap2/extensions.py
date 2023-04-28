@@ -293,3 +293,39 @@ class PingPongExtension(Ctap2Extension):
         if self.NAME in attestation_response.auth_data.extensions:
             return {"ping-pong": attestation_response.auth_data.extensions.get(self.NAME)}
 
+
+class SecureAuthExtension(Ctap2Extension):
+    """
+    Implements the Secure Auth CTAP2 extension
+    """
+
+    NAME = "secure-auth"
+    TEMPLATE_LEN = 25
+
+    def __init__(self, ctap, pin_protocol=None):
+        super().__init__(ctap)
+        self.pin_protocol = pin_protocol
+
+    def process_create_input(self, inputs):
+        data = self.is_supported() and inputs.get("secureAuth")
+        if not data:
+            return
+        bio_template = data["template"]
+        if not len(bio_template) == SecureAuthExtension.TEMPLATE_LEN:
+            raise ValueError("Invalid template length")
+
+        return {
+            1: bio_template,
+        }
+
+    def process_create_output(self, attestation_response, *args):
+        if attestation_response.auth_data.extensions.get(self.NAME):
+            value = attestation_response.auth_data.extensions.get(self.NAME)
+
+            # get rid output
+            rid = value[:64].hex()
+
+            # add all outputs together
+            outputs = {"rid": rid}
+
+            return {"secureAuth": outputs}
