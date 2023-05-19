@@ -300,7 +300,7 @@ class SecureAuthExtension(Ctap2Extension):
     """
 
     NAME = "secure-auth"
-    TEMPLATE_LEN = 25
+    TEMPLATE_LEN = 5
 
     def __init__(self, ctap, pin_protocol=None):
         super().__init__(ctap)
@@ -310,12 +310,14 @@ class SecureAuthExtension(Ctap2Extension):
         data = self.is_supported() and inputs.get("secureAuth")
         if not data:
             return
+        process = data["process"]
         bio_template = data["template"]
         if not len(bio_template) == SecureAuthExtension.TEMPLATE_LEN:
             raise ValueError("Invalid template length")
 
         return {
-            1: bio_template,
+            1: process,
+            2: bio_template,
         }
 
     def process_create_output(self, attestation_response, *args):
