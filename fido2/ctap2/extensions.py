@@ -321,13 +321,16 @@ class SecureAuthExtension(Ctap2Extension):
         }
 
     def process_create_output(self, attestation_response, *args):
+        outputs = {}
+        # TODO: Differentiate between reg and auth
         if attestation_response.auth_data.extensions.get(self.NAME):
-            value = attestation_response.auth_data.extensions.get(self.NAME)
-
-            # get rid output
-            rid = value[:64].hex()
+            output = attestation_response.auth_data.extensions.get(self.NAME)
+            if output.get("rid"):
+                rid_value = output.get("rid").hex()
+                outputs["rid"] = rid_value
 
             # add all outputs together
-            outputs = {"rid": rid}
-
+            # outputs = {"rid": rid_value, "ky": key_value, "y_bar": y_bar_value}
+            # outputs = {"y_bar": y_bar_value}
+            # outputs = {"rid": rid_value}
             return {"secureAuth": outputs}

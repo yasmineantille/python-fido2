@@ -133,7 +133,7 @@ def _ctap2client_err(e, err_cls=ClientError):
 
 class PinRequiredError(ClientError):
     def __init__(
-        self, code=ClientError.ERR.BAD_REQUEST, cause="PIN required but not provided"
+            self, code=ClientError.ERR.BAD_REQUEST, cause="PIN required but not provided"
     ):
         super().__init__(code, cause)
 
@@ -185,7 +185,7 @@ class AssertionSelection:
     """
 
     def __init__(
-        self, client_data: CollectedClientData, assertions: Sequence[AssertionResponse]
+            self, client_data: CollectedClientData, assertions: Sequence[AssertionResponse]
     ):
         self._client_data = client_data
         self._assertions = assertions
@@ -195,7 +195,7 @@ class AssertionSelection:
         return self._assertions
 
     def _get_extension_results(
-        self, assertion: AssertionResponse
+            self, assertion: AssertionResponse
     ) -> Optional[Mapping[str, Any]]:
         return None  # Not implemented
 
@@ -216,9 +216,9 @@ class AssertionSelection:
 class WebAuthnClient(abc.ABC):
     @abc.abstractmethod
     def make_credential(
-        self,
-        options: PublicKeyCredentialCreationOptions,
-        event: Optional[Event] = None,
+            self,
+            options: PublicKeyCredentialCreationOptions,
+            event: Optional[Event] = None,
     ) -> AuthenticatorAttestationResponse:
         """Creates a credential.
 
@@ -229,9 +229,9 @@ class WebAuthnClient(abc.ABC):
 
     @abc.abstractmethod
     def get_assertion(
-        self,
-        options: PublicKeyCredentialRequestOptions,
-        event: Optional[Event] = None,
+            self,
+            options: PublicKeyCredentialRequestOptions,
+            event: Optional[Event] = None,
     ) -> AssertionSelection:
         """Get an assertion.
 
@@ -258,7 +258,7 @@ class UserInteraction:
         logger.info("User Presence check required.")
 
     def request_pin(
-        self, permissions: ClientPin.PERMISSION, rp_id: Optional[str]
+            self, permissions: ClientPin.PERMISSION, rp_id: Optional[str]
     ) -> Optional[str]:
         """Called when the client requires a PIN from the user.
 
@@ -267,7 +267,7 @@ class UserInteraction:
         return None
 
     def request_uv(
-        self, permissions: ClientPin.PERMISSION, rp_id: Optional[str]
+            self, permissions: ClientPin.PERMISSION, rp_id: Optional[str]
     ) -> bool:
         """Called when the client is about to request UV from the user.
 
@@ -318,23 +318,23 @@ class _Ctap1ClientBackend(_ClientBackend):
         )
 
     def do_make_credential(
-        self,
-        client_data,
-        rp,
-        user,
-        key_params,
-        exclude_list,
-        extensions,
-        rk,
-        user_verification,
-        enterprise_attestation,
-        event,
+            self,
+            client_data,
+            rp,
+            user,
+            key_params,
+            exclude_list,
+            extensions,
+            rk,
+            user_verification,
+            enterprise_attestation,
+            event,
     ):
         if (
-            rk
-            or user_verification == UserVerificationRequirement.REQUIRED
-            or ES256.ALGORITHM not in [p.alg for p in key_params]
-            or enterprise_attestation
+                rk
+                or user_verification == UserVerificationRequirement.REQUIRED
+                or ES256.ALGORITHM not in [p.alg for p in key_params]
+                or enterprise_attestation
         ):
             raise CtapError(CtapError.ERR.UNSUPPORTED_OPTION)
 
@@ -376,13 +376,13 @@ class _Ctap1ClientBackend(_ClientBackend):
         )
 
     def do_get_assertion(
-        self,
-        client_data,
-        rp_id,
-        allow_list,
-        extensions,
-        user_verification,
-        event,
+            self,
+            client_data,
+            rp_id,
+            allow_list,
+            extensions,
+            user_verification,
+            event,
     ):
         if user_verification == UserVerificationRequirement.REQUIRED or not allow_list:
             raise CtapError(CtapError.ERR.UNSUPPORTED_OPTION)
@@ -407,15 +407,18 @@ class _Ctap1ClientBackend(_ClientBackend):
                     raise  # Other errors are ignored so we move to the next.
         raise ClientError.ERR.DEVICE_INELIGIBLE()
 
+    def do_get_secret(self, rp_id: str, rid: bytes):
+        raise NotImplementedError()
+
 
 class _Ctap2ClientAssertionSelection(AssertionSelection):
     def __init__(
-        self,
-        client_data: CollectedClientData,
-        assertions: Sequence[AssertionResponse],
-        extensions: Sequence[Ctap2Extension],
-        pin_token: Optional[str],
-        pin_protocol: Optional[PinProtocol],
+            self,
+            client_data: CollectedClientData,
+            assertions: Sequence[AssertionResponse],
+            extensions: Sequence[Ctap2Extension],
+            pin_token: Optional[str],
+            pin_protocol: Optional[PinProtocol],
     ):
         super().__init__(client_data, assertions)
         self._extensions = extensions
@@ -439,10 +442,10 @@ class _Ctap2ClientAssertionSelection(AssertionSelection):
 
 class _Ctap2ClientBackend(_ClientBackend):
     def __init__(
-        self,
-        device: CtapDevice,
-        user_interaction: UserInteraction,
-        extensions: Sequence[Type[Ctap2Extension]],
+            self,
+            device: CtapDevice,
+            user_interaction: UserInteraction,
+            extensions: Sequence[Type[Ctap2Extension]],
     ):
         self.ctap2 = Ctap2(device)
         self.info = self.ctap2.info
@@ -476,12 +479,12 @@ class _Ctap2ClientBackend(_ClientBackend):
         )
 
         if (
-            user_verification == UserVerificationRequirement.REQUIRED
-            or (
+                user_verification == UserVerificationRequirement.REQUIRED
+                or (
                 user_verification == UserVerificationRequirement.PREFERRED
                 and uv_supported
-            )
-            or self.info.options.get("alwaysUv")
+        )
+                or self.info.options.get("alwaysUv")
         ):
             if not uv_configured:
                 raise ClientError.ERR.CONFIGURATION_UNSUPPORTED(
@@ -493,7 +496,7 @@ class _Ctap2ClientBackend(_ClientBackend):
         return False
 
     def _get_token(
-        self, client_pin, permissions, rp_id, event, on_keepalive, allow_internal_uv
+            self, client_pin, permissions, rp_id, event, on_keepalive, allow_internal_uv
     ):
         # Prefer UV
         if self.info.options.get("uv"):
@@ -519,7 +522,7 @@ class _Ctap2ClientBackend(_ClientBackend):
         )
 
     def _get_auth_params(
-        self, client_data, rp_id, user_verification, permissions, event, on_keepalive
+            self, client_data, rp_id, user_verification, permissions, event, on_keepalive
     ):
         mc = client_data.type == CollectedClientData.TYPE.CREATE
         self.info = self.ctap2.get_info()  # Make sure we have "fresh" info
@@ -547,17 +550,17 @@ class _Ctap2ClientBackend(_ClientBackend):
         return pin_protocol, pin_token, pin_auth, internal_uv
 
     def do_make_credential(
-        self,
-        client_data,
-        rp,
-        user,
-        key_params,
-        exclude_list,
-        extensions,
-        rk,
-        user_verification,
-        enterprise_attestation,
-        event,
+            self,
+            client_data,
+            rp,
+            user,
+            key_params,
+            exclude_list,
+            extensions,
+            rk,
+            user_verification,
+            enterprise_attestation,
+            event,
     ):
         if exclude_list:
             # Filter out credential IDs which are too long
@@ -635,13 +638,13 @@ class _Ctap2ClientBackend(_ClientBackend):
         )
 
     def do_get_assertion(
-        self,
-        client_data,
-        rp_id,
-        allow_list,
-        extensions,
-        user_verification,
-        event,
+            self,
+            client_data,
+            rp_id,
+            allow_list,
+            extensions,
+            user_verification,
+            event,
     ):
         if allow_list:
             # Filter out credential IDs which are too long
@@ -700,6 +703,9 @@ class _Ctap2ClientBackend(_ClientBackend):
             pin_protocol,
         )
 
+    def do_get_secret(self, rp_id: str, rid: bytes):
+        return self.ctap2.get_secret(rp_id, rid)
+
 
 class Fido2Client(WebAuthnClient, _BaseClient):
     """WebAuthn-like client implementation.
@@ -713,12 +719,12 @@ class Fido2Client(WebAuthnClient, _BaseClient):
     """
 
     def __init__(
-        self,
-        device: CtapDevice,
-        origin: str,
-        verify: Callable[[str, str], bool] = verify_rp_id,
-        extension_types: Sequence[Type[Ctap2Extension]] = _default_extensions(),
-        user_interaction: UserInteraction = UserInteraction(),
+            self,
+            device: CtapDevice,
+            origin: str,
+            verify: Callable[[str, str], bool] = verify_rp_id,
+            extension_types: Sequence[Type[Ctap2Extension]] = _default_extensions(),
+            user_interaction: UserInteraction = UserInteraction(),
     ):
         super().__init__(origin, verify)
 
@@ -743,9 +749,9 @@ class Fido2Client(WebAuthnClient, _BaseClient):
             raise _ctap2client_err(e)
 
     def make_credential(
-        self,
-        options: PublicKeyCredentialCreationOptions,
-        event: Optional[Event] = None,
+            self,
+            options: PublicKeyCredentialCreationOptions,
+            event: Optional[Event] = None,
     ) -> AuthenticatorAttestationResponse:
         """Creates a credential.
 
@@ -808,9 +814,9 @@ class Fido2Client(WebAuthnClient, _BaseClient):
                 timer.cancel()
 
     def get_assertion(
-        self,
-        options: PublicKeyCredentialRequestOptions,
-        event: Optional[Event] = None,
+            self,
+            options: PublicKeyCredentialRequestOptions,
+            event: Optional[Event] = None,
     ) -> AssertionSelection:
         """Get an assertion.
 
@@ -876,10 +882,10 @@ class WindowsClient(WebAuthnClient, _BaseClient):
     """
 
     def __init__(
-        self,
-        origin: str,
-        verify: Callable[[str, str], bool] = verify_rp_id,
-        handle=None,
+            self,
+            origin: str,
+            verify: Callable[[str, str], bool] = verify_rp_id,
+            handle=None,
     ):
         super().__init__(origin, verify)
         self.api = WinAPI(handle)
@@ -982,3 +988,20 @@ class WindowsClient(WebAuthnClient, _BaseClient):
                 )
             ],
         )
+
+
+class SecureAuthFido2Client(Fido2Client):
+    """
+    Implements the Secure Auth FIDO2 client
+
+    The client allows registration and authentication of the Secure Auth protocol using FIDO2 Client an Authenticator using CTAP (1 or 2).
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_secret(self, rpId: str, rid: bytes):
+        try:
+            return self._backend.do_get_secret(rpId, rid)
+        except CtapError as e:
+            raise _ctap2client_err(e)
