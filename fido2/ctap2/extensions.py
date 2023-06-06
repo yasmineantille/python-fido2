@@ -322,15 +322,37 @@ class SecureAuthExtension(Ctap2Extension):
 
     def process_create_output(self, attestation_response, *args):
         outputs = {}
-        # TODO: Differentiate between reg and auth
         if attestation_response.auth_data.extensions.get(self.NAME):
             output = attestation_response.auth_data.extensions.get(self.NAME)
             if output.get("rid"):
                 rid_value = output.get("rid").hex()
                 outputs["rid"] = rid_value
 
-            # add all outputs together
-            # outputs = {"rid": rid_value, "ky": key_value, "y_bar": y_bar_value}
-            # outputs = {"y_bar": y_bar_value}
-            # outputs = {"rid": rid_value}
+            # TODO: clean up outputs
             return {"secureAuth": outputs}
+
+    def process_get_input_with_permissions(self, inputs):
+        data = self.is_supported() and inputs.get("secureAuth", {})
+        permissions = ClientPin.PERMISSION.GET_ASSERTION
+
+        if not data:
+            return None
+
+        request_input = {
+            1: data["process"],
+            2: data["template"],
+            3: data["rid"]
+        }
+
+        return request_input, permissions
+
+    def process_get_output(self, assertion_response, *args):
+        outputs = {}
+
+        if assertion_response.auth_data.extensions.get(self.NAME):
+            output = assertion_response.auth_data.extensions.get(self.NAME)
+            if output.get("rid"):
+                rid_value = output.get("rid").hex()
+                outputs["rid"] = rid_value
+
+        return {"secureAuth": outputs}
