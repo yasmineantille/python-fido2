@@ -196,7 +196,8 @@ class Ctap2:
         SELECTION = 0x0B
         LARGE_BLOBS = 0x0C
         CONFIG = 0x0D
-        SECURE_AUTH = 0x0E  # Added for secure auth
+        SECURE_AUTH_SECRET = 0x0E  # Added for secure auth
+        SECURE_AUTH_CIPHER = 0x0F
 
         BIO_ENROLLMENT_PRE = 0x40
         CREDENTIAL_MGMT_PRE = 0x41
@@ -604,10 +605,13 @@ class Ctap2:
 
         :return: Mapping of response from the authenticator.
         """
-        print("get_secret in base called")
-
         return self.send_cbor(
-            Ctap2.CMD.SECURE_AUTH,
+            Ctap2.CMD.SECURE_AUTH_SECRET,
             args(rp_id, rid),
         )
 
+    def get_ciphertext(self, rp_id: str, rid: bytes) -> Mapping[int, Any]:
+        return self.send_cbor(
+            Ctap2.CMD.SECURE_AUTH_CIPHER,
+            args(rp_id, rid)
+        )

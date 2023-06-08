@@ -410,6 +410,9 @@ class _Ctap1ClientBackend(_ClientBackend):
     def do_get_secret(self, rp_id: str, rid: bytes):
         raise NotImplementedError()
 
+    def do_get_ciphertext(self, rp_id: str, rid: bytes):
+        raise NotImplementedError()
+
 
 class _Ctap2ClientAssertionSelection(AssertionSelection):
     def __init__(
@@ -705,6 +708,9 @@ class _Ctap2ClientBackend(_ClientBackend):
 
     def do_get_secret(self, rp_id: str, rid: bytes):
         return self.ctap2.get_secret(rp_id, rid)
+
+    def do_get_ciphertext(self, rp_id: str, rid: bytes):
+        return self.ctap2.get_ciphertext(rp_id, rid)
 
 
 class Fido2Client(WebAuthnClient, _BaseClient):
@@ -1003,5 +1009,11 @@ class SecureAuthFido2Client(Fido2Client):
     def get_secret(self, rpId: str, rid: bytes):
         try:
             return self._backend.do_get_secret(rpId, rid)
+        except CtapError as e:
+            raise _ctap2client_err(e)
+
+    def get_ciphertext(self, rpId: str, rid: bytes):
+        try:
+            return self._backend.do_get_ciphertext(rpId, rid)
         except CtapError as e:
             raise _ctap2client_err(e)
