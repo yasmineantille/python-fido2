@@ -503,29 +503,3 @@ class U2FFido2Server(Fido2Server):
             return super().authenticate_complete(*args, **kwargs)
         except ValueError:
             return self._app_id_server.authenticate_complete(*args, **kwargs)
-
-
-class SecureAuthFido2Server(Fido2Server):
-    """
-    Implementation of the Secure Auth FIDO2 server with capabilities of registering and
-    authenticating the secure auth extension data.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.rid = None
-        self.secret = None
-
-    def register_secret(self, rid: bytes, secret_key_k, secret_key_y):
-        """
-        Register received secret key from client
-
-        TODO: Verify the correctness of the registration data received from the client.
-        """
-        # Check values of args and kwargs to determine response variable
-        self.rid = rid
-        self.secret = {
-            "secret_key_k": secret_key_k,
-            "secret_key_y": secret_key_y
-        }
-
