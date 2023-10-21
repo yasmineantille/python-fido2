@@ -271,7 +271,7 @@ class GreeterExtension(Ctap2Extension):
         return self.is_supported() and inputs.get(self.NAME)
 
     def process_create_output(self, attestation_response, *args):
-        if self.NAME in attestation_response.auth_data.extensions:
+        if self.is_supported() and self.NAME in attestation_response.auth_data.extensions:
             return {"greeter": attestation_response.auth_data.extensions.get(self.NAME)}
 
 
@@ -290,69 +290,63 @@ class PingPongExtension(Ctap2Extension):
         return self.is_supported() and inputs.get(self.NAME)
 
     def process_create_output(self, attestation_response, *args):
-        if self.NAME in attestation_response.auth_data.extensions:
+        if self.is_supported() and self.NAME in attestation_response.auth_data.extensions:
             return {"ping-pong": attestation_response.auth_data.extensions.get(self.NAME)}
 
 
-class SecureAuthExtension(Ctap2Extension):
-    """
-    Implements the Secure Auth CTAP2 extension
-    """
-
-    NAME = "secure-auth"
-    TEMPLATE_LEN = 5
-
-    def __init__(self, ctap, pin_protocol=None):
-        super().__init__(ctap)
-        self.pin_protocol = pin_protocol
-
-    def process_create_input(self, inputs):
-        data = self.is_supported() and inputs.get("secureAuth")
-        if not data:
-            return
-        process = data["process"]
-        bio_template = data["template"]
-        if not len(bio_template) == SecureAuthExtension.TEMPLATE_LEN:
-            raise ValueError("Invalid template length")
-
-        return {
-            1: process,
-            2: bio_template,
-        }
-
-    def process_create_output(self, attestation_response, *args):
-        outputs = {}
-        if attestation_response.auth_data.extensions.get(self.NAME):
-            output = attestation_response.auth_data.extensions.get(self.NAME)
-            if output.get("rid"):
-                rid_value = output.get("rid").hex()
-                outputs["rid"] = rid_value
-
-            # TODO: clean up outputs
-            return {"secureAuth": outputs}
-
-    def process_get_input_with_permissions(self, inputs):
-        data = self.is_supported() and inputs.get("secureAuth", {})
-        permissions = ClientPin.PERMISSION.GET_ASSERTION
-
-        if not data:
-            return None
-
-        request_input = {
-            1: data["process"],
-            2: data["template"],
-            3: data["rid"]
-        }
-
-        return request_input, permissions
-
-    def process_get_output(self, assertion_response, *args):
-        outputs = {}
-
-        if assertion_response.auth_data.extensions.get(self.NAME):
-            output = assertion_response.auth_data.extensions.get(self.NAME)
-            if output.get("rid"):
-                rid_value = output.get("rid").hex()
-                outputs["rid"] = rid_value
-
-        return {"secureAuth": outputs}
+# class SecureAuthExtension(Ctap2Extension):
+#     """
+#     Implements the Secure Auth CTAP2 extension
+#     """
+#
+#     NAME = "secure-auth"
+#
+#     def __init__(self, ctap, pin_protocol=None):
+#         super().__init__(ctap)
+#         self.pin_protocol = pin_protocol
+#
+#     def process_create_input(self, inputs):
+#         data = self.is_supported() and inputs.get("secureAuth")
+#         if not data:
+#             return
+#         process = data["process"]
+#         return {
+#             1: process,
+#         }
+#
+#     def process_create_output(self, attestation_response, *args):
+#         outputs = {}
+#         if attestation_response.auth_data.extensions.get(self.NAME):
+#             output = attestation_response.auth_data.extensions.get(self.NAME)
+#             print(output)
+#             rid_value = output.hex()
+#             outputs["rid"] = rid_value
+#         return outputs
+#
+#     def process_get_input_with_permissions(self, inputs):
+#         data = self.is_supported() and inputs.get("secureAuth", {})
+#         permissions = ClientPin.PERMISSION.GET_ASSERTION
+#
+#         if not data:
+#             return None
+#
+#         request_input = {
+#             1: data["process"],
+#             2: data["template"],
+#             3: data["rid"]
+#         }
+#
+#         return request_input, permissions
+#
+#     def process_get_output(self, assertion_response, *args):
+#         print("Got here in process get output")
+#
+#         outputs = {}
+#
+#         if assertion_response.auth_data.extensions.get(self.NAME):
+#             output = assertion_response.auth_data.extensions.get(self.NAME)
+#             if output.get("rid"):
+#                 rid_value = output.get("rid").hex()
+#                 outputs["rid"] = rid_value
+#
+#         return {"secureAuth": outputs}

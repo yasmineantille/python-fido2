@@ -299,6 +299,19 @@ class _ClientBackend(abc.ABC):
     def do_get_assertion(self, *args) -> AssertionSelection:
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def do_secure_auth_setup(self, rpId, rid):
+        raise NotImplementedError()
+
+    def do_secure_auth_register(self, rpId, template):
+        raise NotImplementedError()
+
+    def do_secure_auth_authenticate(self, rpId, rid, template):
+        raise NotImplementedError()
+
+    def do_get_secret(self, rpId, rid):
+        raise NotImplementedError()
+
 
 class _Ctap1ClientBackend(_ClientBackend):
     def __init__(self, device: CtapDevice, user_interaction: UserInteraction):
@@ -406,6 +419,12 @@ class _Ctap1ClientBackend(_ClientBackend):
                 if e.code == ClientError.ERR.TIMEOUT:
                     raise  # Other errors are ignored so we move to the next.
         raise ClientError.ERR.DEVICE_INELIGIBLE()
+
+    def do_secure_auth_setup(self, rpId: str, rid: bytes):
+        raise NotImplementedError()
+
+    def do_secure_auth_register(self, rpId: str, template: list[bytes]):
+        raise NotImplementedError()
 
     def do_get_secret(self, rp_id: str, rid: bytes):
         raise NotImplementedError()
@@ -706,6 +725,16 @@ class _Ctap2ClientBackend(_ClientBackend):
             pin_protocol,
         )
 
+    def do_secure_auth_setup(self, rpId: str, rid: bytes):
+        return self.ctap2.secure_auth_setup(rpId, rid)
+
+    def do_secure_auth_register(self, rpId: str, template: list[bytes]):
+        """Challenge to register the biometric template on the authenticator device"""
+        return self.ctap2.secure_auth_register(rpId, template)
+
+    def do_secure_auth_authenticate(self, rpId: str, rid: bytes, template: list[bytes]):
+        return self.ctap2.secure_auth_authenticate(rpId, rid, template)
+
     def do_get_secret(self, rp_id: str, rid: bytes):
         return self.ctap2.get_secret(rp_id, rid)
 
@@ -1005,15 +1034,38 @@ class SecureAuthFido2Client(Fido2Client):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.TEMPLATE_LEN = 32
 
-    def get_secret(self, rpId: str, rid: bytes):
+    # def secure_auth_setup(self, rpId: str, rid: bytes):
+    #     try:
+    #         return self._backend.do_secure_auth_setup(rpId, rid)
+    #     except CtapError as e:
+    #         raise _ctap2client_err(e)
+
+    def secure_auth_register(self, rpId: str, template: list[bytes]):
+        if not len(template) == self.TEMPLATE_LEN:
+            raise ValueError("Invalid template length for register request!")
         try:
-            return self._backend.do_get_secret(rpId, rid)
+            return self._backend.do_secure_auth_register(rpId, template)
         except CtapError as e:
             raise _ctap2client_err(e)
 
-    def get_ciphertext(self, rpId: str, rid: bytes):
+    def secure_auth_authenticate(self, rpId: str, rid: bytes, template: list[bytes]):
+        if not len(template) == self.TEMPLATE_LEN:
+            raise ValueError("Invalid template length for auth request!")
         try:
-            return self._backend.do_get_ciphertext(rpId, rid)
+            return self._backend.do_secure_auth_authenticate(rpId, rid, template)
         except CtapError as e:
             raise _ctap2client_err(e)
+    #
+    # def get_secret(self, rpId: str, rid: bytes):
+    #     try:
+    #         return self._backend.do_get_secret(rpId, rid)
+    #     except CtapError as e:
+    #         raise _ctap2client_err(e)
+    #
+    # def get_ciphertext(self, rpId: str, rid: bytes):
+    #     try:
+    #         return self._backend.do_get_ciphertext(rpId, rid)
+    #     except CtapError as e:
+    #         raise _ctap2client_err(e)
