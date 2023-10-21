@@ -196,6 +196,11 @@ class Ctap2:
         SELECTION = 0x0B
         LARGE_BLOBS = 0x0C
         CONFIG = 0x0D
+        SECURE_AUTH_SECRET = 0x0E  # Added for secure auth
+        SECURE_AUTH_CIPHER = 0x0F
+        SECURE_AUTH_TEMPLATE = 0x10
+        SECURE_AUTH_REGISTER = 0x11
+        SECURE_AUTH_AUTHENTICATE = 0x12
 
         BIO_ENROLLMENT_PRE = 0x40
         CREDENTIAL_MGMT_PRE = 0x41
@@ -593,4 +598,49 @@ class Ctap2:
         return self.send_cbor(
             Ctap2.CMD.CONFIG,
             args(sub_cmd, sub_cmd_params, pin_uv_protocol, pin_uv_param),
+        )
+
+    # def secure_auth_setup(self,  rpId: str, rid: bytes):
+    #     return self.send_cbor(
+    #         Ctap2.CMD.SECURE_AUTH_SETUP,
+    #         args(rpId, rid),
+    #     )
+
+    def secure_auth_register(self, rpId: str, template: list[bytes]):
+        """ TODO description """
+        return self.send_cbor(
+            Ctap2.CMD.SECURE_AUTH_REGISTER,
+            args(rpId, template),
+        )
+
+    def secure_auth_authenticate(self, rpId: str, rid: bytes, template: list[bytes]):
+        return self.send_cbor(
+            Ctap2.CMD.SECURE_AUTH_AUTHENTICATE,
+            args(rpId, template, rid)
+        )
+
+    def get_secret(self, rp_id: str, rid: bytes) -> Mapping[int, Any]:
+        """CTAP2 get_secret command.
+
+        :param rp_id: The RP ID of the credential.
+        :param rid: The RID of the secure auth user.
+
+        :return: Mapping of response from the authenticator.
+        """
+        return self.send_cbor(
+            Ctap2.CMD.SECURE_AUTH_SECRET,
+            args(rp_id, rid),
+        )
+
+    def get_ciphertext(self, rp_id: str, rid: bytes) -> Mapping[int, Any]:
+        """CTAP2 get_ciphertext command.
+
+        :param rp_id: The RP ID of the credential.
+        :param rid: The RID of the secure auth user.
+
+        :return: Mapping of response from the authenticator.
+        """
+        return self.send_cbor(
+            Ctap2.CMD.SECURE_AUTH_CIPHER,
+            args(rp_id, rid)
         )
