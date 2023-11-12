@@ -300,16 +300,11 @@ class _ClientBackend(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def do_secure_auth_setup(self, rpId, rid):
+    def do_secure_auth_register(self, step, rpId, template, rid):
         raise NotImplementedError()
 
-    def do_secure_auth_register(self, rpId, template):
-        raise NotImplementedError()
-
-    def do_secure_auth_authenticate(self, rpId, rid, template):
-        raise NotImplementedError()
-
-    def do_get_secret(self, rpId, rid):
+    @abc.abstractmethod
+    def do_secure_auth_authenticate(self, step, rpId, rid, template):
         raise NotImplementedError()
 
 
@@ -423,7 +418,7 @@ class _Ctap1ClientBackend(_ClientBackend):
     def do_secure_auth_setup(self, rpId: str, rid: bytes):
         raise NotImplementedError()
 
-    def do_secure_auth_register(self, rpId: str, template: list[bytes]):
+    def do_secure_auth_register(self, step: int, rpId: str, template: list[bytes], rid=None):
         raise NotImplementedError()
 
     def do_get_secret(self, rp_id: str, rid: bytes):
@@ -728,12 +723,12 @@ class _Ctap2ClientBackend(_ClientBackend):
     def do_secure_auth_setup(self, rpId: str, rid: bytes):
         return self.ctap2.secure_auth_setup(rpId, rid)
 
-    def do_secure_auth_register(self, rpId: str, template: list[bytes]):
+    def do_secure_auth_register(self, step: int, rpId: str, template: list[bytes], rid=None):
         """Challenge to register the biometric template on the authenticator device"""
-        return self.ctap2.secure_auth_register(rpId, template)
+        return self.ctap2.secure_auth_register(step, rpId, template, rid)
 
-    def do_secure_auth_authenticate(self, rpId: str, rid: bytes, template: list[bytes]):
-        return self.ctap2.secure_auth_authenticate(rpId, rid, template)
+    def do_secure_auth_authenticate(self, step: int, rpId: str, rid: bytes, template: list[bytes]):
+        return self.ctap2.secure_auth_authenticate(step, rpId, rid, template)
 
     def do_get_secret(self, rp_id: str, rid: bytes):
         return self.ctap2.get_secret(rp_id, rid)
@@ -1023,49 +1018,3 @@ class WindowsClient(WebAuthnClient, _BaseClient):
                 )
             ],
         )
-
-
-class SecureAuthFido2Client(Fido2Client):
-    """
-    Implements the Secure Auth FIDO2 client
-
-    The client allows registration and authentication of the Secure Auth protocol using FIDO2 Client an Authenticator using CTAP (1 or 2).
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.TEMPLATE_LEN = 32
-
-    # def secure_auth_setup(self, rpId: str, rid: bytes):
-    #     try:
-    #         return self._backend.do_secure_auth_setup(rpId, rid)
-    #     except CtapError as e:
-    #         raise _ctap2client_err(e)
-
-    def secure_auth_register(self, rpId: str, template: list[bytes]):
-        if not len(template) == self.TEMPLATE_LEN:
-            raise ValueError("Invalid template length for register request!")
-        try:
-            return self._backend.do_secure_auth_register(rpId, template)
-        except CtapError as e:
-            raise _ctap2client_err(e)
-
-    def secure_auth_authenticate(self, rpId: str, rid: bytes, template: list[bytes]):
-        if not len(template) == self.TEMPLATE_LEN:
-            raise ValueError("Invalid template length for auth request!")
-        try:
-            return self._backend.do_secure_auth_authenticate(rpId, rid, template)
-        except CtapError as e:
-            raise _ctap2client_err(e)
-    #
-    # def get_secret(self, rpId: str, rid: bytes):
-    #     try:
-    #         return self._backend.do_get_secret(rpId, rid)
-    #     except CtapError as e:
-    #         raise _ctap2client_err(e)
-    #
-    # def get_ciphertext(self, rpId: str, rid: bytes):
-    #     try:
-    #         return self._backend.do_get_ciphertext(rpId, rid)
-    #     except CtapError as e:
-    #         raise _ctap2client_err(e)
